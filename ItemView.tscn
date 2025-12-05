@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0yw42e3psrq5"]
+
+[ext_resource type="Script" uid="uid://dr0el2r2hjont" path="res://DraggableItem.gd" id="1_fhx2v"]
+
+[node name="ItemView" type="ColorRect"]
+custom_minimum_size = Vector2(60, 60)
+color = Color(0.119809695, 0.3982464, 0.86599094, 1)
+script = ExtResource("1_fhx2v")

@@ -1,0 +1,17 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/ios/
+*.tmp
+*.out
+
+# Imported assets (обычно они лежат в .godot, но на всякий случай)
+*.import
+
+# Export presets
+export_presets.cfg
+
+# Mono/C# builds (если вдруг будем использовать C#)
+.mono/
+*.sln
+*.csproj
