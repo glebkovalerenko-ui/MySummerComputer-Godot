@@ -1,29 +1,34 @@
 extends ColorRect
 
-# Имя детали, которое мы передадим слоту
-@export var part_name: String = "GPU_Basic"
+# Храним не строку, а сам ресурс данных
+var item_data: ItemData
+
+func setup(data: ItemData):
+	item_data = data
+	color = data.color
+	# Здесь можно добавить загрузку иконки:
+	# $Icon.texture = data.icon 
+	# tooltip_text = "%s\n$%d" % [data.display_name, data.price]
 
 func _get_drag_data(_at_position):
-	# 1. Создаем данные, которые "летут" вместе с курсором
+	if item_data == null: return null
+	
+	# 1. Данные для передачи
 	var data = {
-		"part_name": part_name,
-		"origin_node": self # Ссылка на саму себя, чтобы потом можно было удалить/скрыть
+		"item_data": item_data, # Передаем весь ресурс целиком
+		"origin_node": self
 	}
 	
-	# 2. Визуализация перетаскивания (Ghost)
-	# Мы создаем копию этого квадрата, которая прилипнет к курсору
+	# 2. Визуализация (Ghost)
 	var preview = ColorRect.new()
 	preview.size = size
 	preview.color = color
-	preview.color.a = 0.5 # Делаем полупрозрачным
+	preview.color.a = 0.5
 	
-	# Control узел, который будет держать превью
 	var preview_control = Control.new()
 	preview_control.add_child(preview)
-	# Смещаем, чтобы курсор был по центру детали
 	preview.position = -0.5 * size 
 	
-	# Эта функция встроенная, она "вешает" превью на курсор
 	set_drag_preview(preview_control)
 	
 	return data

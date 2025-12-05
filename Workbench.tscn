@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://b15vkua2stptc"]
+[gd_scene load_steps=5 format=3 uid="uid://b15vkua2stptc"]
 
 [ext_resource type="Script" uid="uid://pirgxfn6eyan" path="res://Slot.gd" id="1_jxctb"]
 [ext_resource type="Script" uid="uid://1ilklfatjcu4" path="res://Workbench.gd" id="1_mbgn7"]
+[ext_resource type="Resource" uid="uid://ci63d8pniaie1" path="res://Resources/Parts/GPU_Basic.tres" id="2_eacyk"]
 [ext_resource type="PackedScene" uid="uid://domkd1xod2cpx" path="res://InventoryPanel.tscn" id="3_mbgn7"]
 
 [node name="Workbench" type="Control"]
@@ -12,6 +13,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_mbgn7")
+gpu_item_to_sell = ExtResource("2_eacyk")
 
 [node name="InventoryPanel" parent="." instance=ExtResource("3_mbgn7")]
 layout_mode = 1

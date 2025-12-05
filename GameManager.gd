@@ -1,52 +1,58 @@
 extends Node
 
 # --- СИГНАЛЫ ---
-# Испускаются, когда данные меняются. UI будет их слушать.
-signal inventory_updated # Инвентарь изменился (добавили/убрали вещь)
-signal pc_updated        # Состояние сборки изменилось (деталь поставили/сняли)
-signal money_updated     # Денег стало больше/меньше
+signal inventory_updated
+signal pc_updated
+signal money_updated
 
 # --- ДАННЫЕ (State) ---
-var money: int = 100
+var money: int = 200 # Подкинул немного денег для тестов
 var energy: int = 100
 
-# Массивы теперь меняем только через функции ниже
-var inventory: Array[String] = []
-var pc_assembled_parts: Array[String] = []
+# Инвентарь теперь хранит ссылки на ресурсы ItemData
+var inventory: Array[ItemData] = []
 
-# --- ФУНКЦИИ УПРАВЛЕНИЯ ИНВЕНТАРЕМ ---
+# Собранный ПК тоже хранит ресурсы.
+# Для простоты пока оставляем массив, но ищем в нем по типу.
+var pc_assembled_parts: Array[ItemData] = []
 
-# Добавить предмет в инвентарь (покупка или снятие с ПК)
-func add_item(item_name: String):
-	inventory.append(item_name)
-	inventory_updated.emit() # Сообщаем всем: "Перерисуйте инвентарь!"
-	print("Inventory add: ", item_name, " | Total: ", inventory)
+# --- УПРАВЛЕНИЕ ИНВЕНТАРЕМ ---
 
-# Удалить предмет из инвентаря (продажа или установка в ПК)
-func remove_item(item_name: String):
-	if item_name in inventory:
-		inventory.erase(item_name) # Удаляет первое совпадение
+func add_item(item: ItemData):
+	if item == null: return
+	inventory.append(item)
+	inventory_updated.emit()
+	print("Inventory add: ", item.display_name)
+
+func remove_item(item: ItemData):
+	if item in inventory:
+		# Удаляем конкретный экземпляр ссылки (или первую найденную)
+		inventory.erase(item)
 		inventory_updated.emit()
-		print("Inventory remove: ", item_name)
+		print("Inventory remove: ", item.display_name)
 
-# --- ФУНКЦИИ УПРАВЛЕНИЯ СБОРКОЙ ---
+# --- УПРАВЛЕНИЕ СБОРКОЙ ---
 
-# Установка детали: Из инвентаря -> В ПК
-func install_part(part_name: String):
-	# Сначала проверяем, есть ли деталь в инвентаре
-	if part_name in inventory:
-		remove_item(part_name) # Убираем из инвентаря (сигнал inventory_updated сработает внутри)
-		pc_assembled_parts.append(part_name)
-		pc_updated.emit()      # Сообщаем слотам: "Проверьте свое состояние"
-		print("PC Install: ", part_name)
+func install_part(item: ItemData):
+	if item in inventory:
+		remove_item(item) # Убрать из инвентаря
+		pc_assembled_parts.append(item)
+		pc_updated.emit()
+		print("PC Install: ", item.display_name)
 
-# Снятие детали: Из ПК -> В инвентарь
-func uninstall_part(part_name: String):
-	if part_name in pc_assembled_parts:
-		pc_assembled_parts.erase(part_name)
-		pc_updated.emit()      # Сообщаем слотам
-		add_item(part_name)    # Возвращаем в инвентарь (сигнал inventory_updated сработает внутри)
-		print("PC Uninstall: ", part_name)
+func uninstall_part(item: ItemData):
+	if item in pc_assembled_parts:
+		pc_assembled_parts.erase(item)
+		pc_updated.emit()
+		add_item(item) # Вернуть в инвентарь
+		print("PC Uninstall: ", item.display_name)
+
+# Вспомогательная функция: Получить установленную деталь определенного типа
+func get_installed_part(type: GlobalEnums.PartType) -> ItemData:
+	for part in pc_assembled_parts:
+		if part.part_type == type:
+			return part
+	return null
 
 # --- ФИНАНСЫ ---
 func change_money(amount: int):

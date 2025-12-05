@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://ci63d8pniaie1"]
+
+[ext_resource type="Script" uid="uid://dqsqpev8swn2q" path="res://ItemData.gd" id="1_oytnw"]
+
+[resource]
+script = ExtResource("1_oytnw")
+id = "gpu_basic"
+display_name = "GTX 650 Ti"
+price = 100
+color = Color(0.7901954, 0.18652344, 0.27893397, 1)
+metadata/_custom_type_script = "uid://dqsqpev8swn2q"

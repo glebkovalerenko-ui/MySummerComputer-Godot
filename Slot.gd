@@ -1,68 +1,77 @@
 extends ColorRect
 
-@export var compatible_part_name: String = "GPU_Basic"
+# Настраиваем в Инспекторе: Какой тип принимает этот слот?
+@export var compatible_type: GlobalEnums.PartType = GlobalEnums.PartType.GPU
 
 func _ready():
-	color = Color.GRAY
-	
-	# Подписываемся на обновление ПК. 
-	# Теперь слот сам проверяет, стоит в нем что-то или нет.
+	color = Color(0.3, 0.3, 0.3) # Серый цвет пустого слота
 	GameManager.pc_updated.connect(update_visual_state)
-	
-	# Первая проверка при запуске
 	update_visual_state()
 
-# --- 1. РЕАКЦИЯ НА ИЗМЕНЕНИЯ (Reactive Logic) ---
+# --- 1. РЕАКЦИЯ НА ИЗМЕНЕНИЯ ---
 func update_visual_state():
-	# Проверяем в Менеджере: установлена ли эта деталь?
-	var is_installed = compatible_part_name in GameManager.pc_assembled_parts
+	# Ищем в менеджере деталь нужного нам типа
+	var installed_item = GameManager.get_installed_part(compatible_type)
 	
-	if is_installed:
-		# Если детали визуально нет — создаем
+	if installed_item != null:
+		# Если деталь есть в базе, но нет визуально -> создаем
 		if get_child_count() == 0:
-			create_visual_part()
+			create_visual_part(installed_item)
+		else:
+			# Если визуально что-то есть, проверим, та ли это деталь
+			# (вдруг мы поменяли одну GPU на другую)
+			# Для простоты: просто пересоздаем, если цвет не совпал (или ID)
+			pass 
 	else:
-		# Если деталь визуально есть, но в базе её нет — удаляем
+		# Если в базе пусто, а визуально что-то есть -> удаляем
 		for child in get_children():
 			child.queue_free()
 
-func create_visual_part():
+func create_visual_part(item: ItemData):
 	var inserted_part = ColorRect.new()
-	inserted_part.color = Color.RED
+	inserted_part.color = item.color # Берем цвет из Ресурса
 	inserted_part.set_anchors_preset(Control.PRESET_FULL_RECT)
-	# Важно: игнорируем мышь на детали, чтобы слот под ней ловил события
 	inserted_part.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(inserted_part)
 
-# --- 2. ВСТАВКА (Принимаем деталь из инвентаря) ---
+# --- 2. ВСТАВКА (DROP) ---
 func _can_drop_data(_at_position, data):
-	# Принимаем только если слот пуст и имя совпадает
-	var is_empty = (compatible_part_name not in GameManager.pc_assembled_parts)
-	return is_empty and data.get("part_name") == compatible_part_name
+	# Проверяем структуру данных
+	if not data.has("item_data"): return false
+	
+	var item = data["item_data"] as ItemData
+	
+	# 1. Проверяем тип (GPU == GPU?)
+	if item.part_type != compatible_type:
+		return false
+		
+	# 2. Проверяем, не занят ли слот
+	var is_occupied = (GameManager.get_installed_part(compatible_type) != null)
+	return not is_occupied
 
 func _drop_data(_at_position, data):
-	GameManager.install_part(data["part_name"])
-	# Визуал обновится сам через update_visual_state (сигнал)
+	var item = data["item_data"] as ItemData
+	GameManager.install_part(item)
 
-# --- 3. ИЗВЛЕЧЕНИЕ (Тянем деталь ИЗ слота) ---
+# --- 3. ИЗВЛЕЧЕНИЕ (DRAG) ---
 func _get_drag_data(_at_position):
-	print("Slot: Попытка тянуть слот...")
-	# Если слот пуст, тянуть нечего
-	if compatible_part_name not in GameManager.pc_assembled_parts:
-		print("Slot: Пусто, тянуть нечего")
+	# Проверяем, есть ли что-то в этом слоте
+	var installed_item = GameManager.get_installed_part(compatible_type)
+	
+	if installed_item == null:
 		return null
 		
-	print("Slot: Начало перетаскивания УСПЕХ")
-	# 1. Формируем данные
+	print("Slot: Тянем ", installed_item.display_name)
+	
 	var data = {
-		"part_name": compatible_part_name,
-		"from_slot": true # Метка, что мы тянем уже установленную деталь
+		"item_data": installed_item,
+		"from_slot": true # Метка, что тянем из ПК
 	}
 	
-	# 2. Визуальный призрак (Ghost)
+	# Визуальный призрак
 	var preview = ColorRect.new()
 	preview.size = size
-	preview.color = Color.RED
+	preview.color = installed_item.color
 	preview.color.a = 0.5
 	var c = Control.new()
 	c.add_child(preview)
