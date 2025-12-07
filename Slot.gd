@@ -1,74 +1,63 @@
 extends ColorRect
 
-# Настраиваем в Инспекторе: Какой тип принимает этот слот?
 @export var compatible_type: GlobalEnums.PartType = GlobalEnums.PartType.GPU
 
+# Настройки жестов
+const DRAG_THRESHOLD = 20.0
+var _touch_start_pos: Vector2 = Vector2.ZERO
+var _is_waiting_for_drag: bool = false
+
 func _ready():
-	color = Color(0.3, 0.3, 0.3) # Серый цвет пустого слота
+	color = Color(0.3, 0.3, 0.3)
 	GameManager.pc_updated.connect(update_visual_state)
 	update_visual_state()
 
-# --- 1. РЕАКЦИЯ НА ИЗМЕНЕНИЯ ---
 func update_visual_state():
-	# Ищем в менеджере деталь нужного нам типа
 	var installed_item = GameManager.get_installed_part(compatible_type)
 	
-	if installed_item != null:
-		# Если деталь есть в базе, но нет визуально -> создаем
-		if get_child_count() == 0:
-			create_visual_part(installed_item)
-		else:
-			# Если визуально что-то есть, проверим, та ли это деталь
-			# (вдруг мы поменяли одну GPU на другую)
-			# Для простоты: просто пересоздаем, если цвет не совпал (или ID)
-			pass 
-	else:
-		# Если в базе пусто, а визуально что-то есть -> удаляем
-		for child in get_children():
-			child.queue_free()
-
-func create_visual_part(item: ItemData):
-	var inserted_part = ColorRect.new()
-	inserted_part.color = item.color # Берем цвет из Ресурса
-	inserted_part.set_anchors_preset(Control.PRESET_FULL_RECT)
-	inserted_part.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(inserted_part)
-
-# --- 2. ВСТАВКА (DROP) ---
-func _can_drop_data(_at_position, data):
-	# Проверяем структуру данных
-	if not data.has("item_data"): return false
-	
-	var item = data["item_data"] as ItemData
-	
-	# 1. Проверяем тип (GPU == GPU?)
-	if item.part_type != compatible_type:
-		return false
+	# Очищаем старое
+	for child in get_children():
+		child.queue_free()
 		
-	# 2. Проверяем, не занят ли слот
-	var is_occupied = (GameManager.get_installed_part(compatible_type) != null)
-	return not is_occupied
+	if installed_item != null:
+		var visual = ColorRect.new()
+		visual.color = installed_item.color
+		visual.set_anchors_preset(Control.PRESET_FULL_RECT)
+		visual.mouse_filter = Control.MOUSE_FILTER_IGNORE # Чтобы события шли в Слот
+		add_child(visual)
 
-func _drop_data(_at_position, data):
-	var item = data["item_data"] as ItemData
-	GameManager.install_part(item)
+# --- ВВОД (CLICK + DRAG ИЗ СЛОТА) ---
 
-# --- 3. ИЗВЛЕЧЕНИЕ (DRAG) ---
-func _get_drag_data(_at_position):
-	# Проверяем, есть ли что-то в этом слоте
+func _gui_input(event):
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
+		if event.pressed:
+			_touch_start_pos = event.global_position
+			_is_waiting_for_drag = true
+		elif not event.pressed and _is_waiting_for_drag:
+			if _touch_start_pos.distance_to(event.global_position) < DRAG_THRESHOLD:
+				_on_slot_clicked()
+			_is_waiting_for_drag = false
+
+func _on_slot_clicked():
 	var installed_item = GameManager.get_installed_part(compatible_type)
+	if installed_item:
+		# Открываем инфо для УСТАНОВЛЕННОГО предмета
+		UIManager.show_item_info(installed_item, GlobalEnums.ItemContext.INSTALLED)
+	else:
+		print("Slot is empty")
+		# Здесь можно добавить логику подсветки инвентаря
+
+func _get_drag_data(_at_position):
+	var installed_item = GameManager.get_installed_part(compatible_type)
+	if installed_item == null: return null
 	
-	if installed_item == null:
+	# Проверка порога
+	if _touch_start_pos.distance_to(get_global_mouse_position()) < DRAG_THRESHOLD:
 		return null
 		
-	print("Slot: Тянем ", installed_item.display_name)
+	_is_waiting_for_drag = false
 	
-	var data = {
-		"item_data": installed_item,
-		"from_slot": true # Метка, что тянем из ПК
-	}
-	
-	# Визуальный призрак
+	# Данные для драга
 	var preview = ColorRect.new()
 	preview.size = size
 	preview.color = installed_item.color
@@ -78,4 +67,18 @@ func _get_drag_data(_at_position):
 	preview.position = -0.5 * size
 	set_drag_preview(c)
 	
-	return data
+	return {
+		"item_data": installed_item,
+		"from_slot": true
+	}
+
+# --- DROP (ВСТАВКА) ---
+func _can_drop_data(_at_position, data):
+	if not data.has("item_data"): return false
+	var item = data["item_data"] as ItemData
+	if item.part_type != compatible_type: return false
+	return GameManager.get_installed_part(compatible_type) == null
+
+func _drop_data(_at_position, data):
+	var item = data["item_data"] as ItemData
+	GameManager.install_part(item)

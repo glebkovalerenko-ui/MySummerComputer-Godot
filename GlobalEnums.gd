@@ -11,6 +11,13 @@ enum PartType {
 	CASE
 }
 
-# Вспомогательная функция для получения названия типа (для отладки)
+# Контекст, в котором находится предмет (для UI)
+enum ItemContext {
+	INVENTORY, # Предмет лежит в инвентаре
+	INSTALLED, # Предмет установлен в слот ПК
+	SHOP       # Предмет в магазине (на будущее)
+}
+
+# Вспомогательная функция для получения названия типа
 static func get_type_name(type: PartType) -> String:
 	return PartType.keys()[type]

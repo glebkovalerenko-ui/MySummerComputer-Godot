@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 GameManager="*res://GameManager.gd"
 ItemDatabase="*res://ItemDatabase.gd"
+UIManager="*res://UIManager.gd"
 
 [display]
 

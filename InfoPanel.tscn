@@ -1,0 +1,67 @@
+[gd_scene load_steps=4 format=3 uid="uid://b2gc7gbw7h8ct"]
+
+[ext_resource type="Script" uid="uid://cro77nm06xpek" path="res://InfoPanel.gd" id="1_642oh"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_642oh"]
+font_size = 32
+
+[sub_resource type="LabelSettings" id="LabelSettings_o3ib4"]
+font_color = Color(0.9647059, 0.76862746, 0.28235295, 1)
+
+[node name="InfoPanel" type="CanvasLayer"]
+script = ExtResource("1_642oh")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5019608)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "Название предмета"
+label_settings = SubResource("LabelSettings_642oh")
+horizontal_alignment = 1
+
+[node name="ItemColorPreview" type="ColorRect" parent="CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+color = Color(0.17020741, 0.37871316, 0.5311579, 1)
+
+[node name="StatsLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "Цена: 100$"
+horizontal_alignment = 1
+
+[node name="ContextHintLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "Перетащи, чтобы установить"
+label_settings = SubResource("LabelSettings_o3ib4")
+horizontal_alignment = 1
+
+[node name="ButtonsContainer" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="UninstallButton" type="Button" parent="CenterContainer/Panel/VBox/ButtonsContainer"]
+layout_mode = 2
+text = "Снять"
+
+[node name="CloseButton" type="Button" parent="CenterContainer/Panel/VBox/ButtonsContainer"]
+layout_mode = 2
+text = "Закрыть"
